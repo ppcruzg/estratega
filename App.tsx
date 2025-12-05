@@ -690,6 +690,29 @@ const App: React.FC = () => {
 
   const handleUpdateItem = (colId: string, itemId: string, field: 'label' | 'description' | 'date', value: string) => {
     if (!guardEdit()) return;
+
+    const column = columns.find(c => c.id === colId);
+    const item = column?.items.find(i => i.id === itemId);
+
+    // Track change for date updates
+    if (field === 'date' && item) {
+      const previousDate = item.date ? new Date(item.date).toLocaleDateString('es-ES') : 'sin fecha';
+      const newDate = value ? new Date(value).toLocaleDateString('es-ES') : 'sin fecha';
+
+      addChangeRecord(
+        'item',
+        'updated',
+        `Fecha actualizada en "${column?.title || 'grupo'}" para "${item.label}"`,
+        {
+          itemName: item.label,
+          groupName: column?.title,
+          groupDescription: column?.description,
+          previousValue: previousDate,
+          newValue: newDate
+        }
+      );
+    }
+
     setColumns(prev => prev.map(col => {
       if (col.id !== colId) return col;
       return {

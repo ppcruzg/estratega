@@ -203,10 +203,10 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
                 value={label}
                 onSave={onUpdateLabel}
                 variant="dark"
-                className="font-bold text-slate-700 text-sm"
+                className="font-bold text-slate-700 text-xs"
               />
             ) : (
-              <p className="text-sm font-bold text-slate-700 truncate">{label}</p>
+              <p className="text-xs font-bold text-slate-700 truncate">{label}</p>
             )}
           </div>
 
@@ -236,20 +236,26 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
           )}
         </div>
 
-        {/* Date Display */}
-        {date && (
-          <p className="mt-1 text-xs font-bold text-slate-700">{formatDate(date)}</p>
-        )}
-
-        {/* Date Picker - only show when no date is set */}
-        {onUpdateDate && !date && (
-          <input
-            type="date"
-            value={date || ''}
-            onChange={(e) => onUpdateDate(e.target.value)}
-            className="mt-1 text-xs bg-transparent border-none outline-none text-slate-500 placeholder:text-slate-400"
-            placeholder="Seleccionar fecha"
-          />
+        {/* Date Display and Picker */}
+        {onUpdateDate && (
+          <div className="mt-1 relative">
+            <input
+              type="date"
+              value={date || ''}
+              onChange={(e) => onUpdateDate(e.target.value)}
+              className="absolute inset-0 w-full h-6 opacity-0 cursor-pointer"
+              title="Cambiar fecha"
+            />
+            {date ? (
+              <div className="text-xs font-bold text-slate-700 px-2 py-1 bg-slate-50 rounded border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+                📅 {formatDate(date)}
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400 px-2 py-1 bg-slate-50 rounded border border-dashed border-slate-300 cursor-pointer hover:border-slate-400 transition-colors">
+                📅 Agregar fecha
+              </div>
+            )}
+          </div>
         )}
       </div>
 
