@@ -31,11 +31,13 @@ interface DiagramNodeProps {
   status?: ProjectStatus;
   availableStatuses?: StatusCategory[]; // New Prop for dynamic categories
   hasIcon?: 'dollar' | 'bulb' | 'refresh';
-  description?: string; 
+  description?: string;
   isExternalLink?: boolean;
+  date?: string; // ISO date string
   onDelete?: () => void;
   onUpdateLabel?: (val: string) => void;
   onUpdateDescription?: (val: string) => void;
+  onUpdateDate?: (val: string) => void; // Callback to parent
   onUpdateStatus?: (newStatusId: string) => void; // Callback to parent
 }
 
@@ -58,45 +60,65 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
   hasIcon,
   description,
   isExternalLink,
+  date,
   onDelete,
   onUpdateLabel,
   onUpdateDescription,
+  onUpdateDate,
   onUpdateStatus
 }) => {
+  // Función para formatear la fecha
+  const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+
+    const months = [
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+    ];
+
+    try {
+      const date = new Date(dateString + 'T00:00:00');
+      const day = date.getDate();
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day} de ${month} ${year}`;
+    } catch (e) {
+      return dateString;
+    }
+  };
   
   // Function to generate icon based on status label/text
-  const getStatusIcon = (statusLabel: string, sizeOverride?: number) => {
-    const size = sizeOverride || 12;
+  const getStatusIcon = (statusLabel: string) => {
     const normalizedLabel = statusLabel.toLowerCase().trim();
     
     // Map keywords to appropriate icons
     if (normalizedLabel.includes('productivo') || normalizedLabel.includes('prod') || normalizedLabel.includes('production')) {
-      return <CheckCircle size={size} />;
+      return <CheckCircle size={12} />;
     }
     if (normalizedLabel.includes('dev') || normalizedLabel.includes('development') || normalizedLabel.includes('desarrollo')) {
-      return <Loader size={size} />;
+      return <Loader size={12} />;
     }
     if (normalizedLabel.includes('upgrade') || normalizedLabel.includes('actualización')) {
-      return <ArrowUp size={size} />;
+      return <ArrowUp size={12} />;
     }
     if (normalizedLabel.includes('maintenance') || normalizedLabel.includes('mantenimiento')) {
-      return <Wrench size={size} />;
+      return <Wrench size={12} />;
     }
     if (normalizedLabel.includes('warning') || normalizedLabel.includes('advertencia') || normalizedLabel.includes('alert')) {
-      return <AlertCircle size={size} />;
+      return <AlertCircle size={12} />;
     }
     if (normalizedLabel.includes('active') || normalizedLabel.includes('activo')) {
-      return <Zap size={size} />;
+      return <Zap size={12} />;
     }
     if (normalizedLabel.includes('improvement') || normalizedLabel.includes('mejora')) {
-      return <TrendingUp size={size} />;
+      return <TrendingUp size={12} />;
     }
     if (normalizedLabel.includes('security') || normalizedLabel.includes('seguridad')) {
-      return <Shield size={size} />;
+      return <Shield size={12} />;
     }
     
     // Default icon
-    return <Activity size={size} />;
+    return <Activity size={12} />;
   };
   
   // Icon mapping based on node type/props
@@ -141,7 +163,7 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
     if (category) {
        const styleClass = colorStyles[category.color] || colorStyles.slate;
        return (
-        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-medium border select-none whitespace-nowrap ${styleClass}`}>
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border select-none ${styleClass}`}>
           {getStatusIcon(category.label)}
           {category.label}
         </span>
@@ -150,7 +172,7 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
 
     // Fallback if status exists but category definition is missing (e.g. legacy data)
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 whitespace-nowrap">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
         {getStatusIcon(status)}
         {status}
       </span>
@@ -166,7 +188,7 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
           const iconColor = colorStyles[category.color]?.split(' ')[1] || 'text-slate-500';
           return (
             <div className={`mt-0.5 flex-shrink-0 ${iconColor}`}>
-              {getStatusIcon(category.label, 20)}
+              {getStatusIcon(category.label)}
             </div>
           );
         }
@@ -177,19 +199,19 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             {onUpdateLabel ? (
-              <EditableText 
-                value={label} 
-                onSave={onUpdateLabel} 
+              <EditableText
+                value={label}
+                onSave={onUpdateLabel}
                 variant="dark"
-                className="font-medium text-slate-700 text-sm"
+                className="font-bold text-slate-700 text-sm"
               />
             ) : (
-              <p className="text-sm font-medium text-slate-700 truncate">{label}</p>
+              <p className="text-sm font-bold text-slate-700 truncate">{label}</p>
             )}
           </div>
-          
+
           {/* Status Toggle Area - Fixed size button */}
-          <div 
+          <div
             className="cursor-pointer flex-shrink-0 ml-2 hover:opacity-80 transition-opacity w-fit"
             onClick={handleStatusClick}
             title="Clic para cambiar estado"
@@ -201,9 +223,9 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
         {/* Editable Description */}
         <div className="mt-0.5">
           {onUpdateDescription ? (
-             <EditableText 
-                value={description || ''} 
-                onSave={onUpdateDescription} 
+             <EditableText
+                value={description || ''}
+                onSave={onUpdateDescription}
                 variant="dark"
                 className="text-xs text-slate-500"
                 placeholder="Añadir descripción..."
@@ -213,6 +235,22 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
             description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>
           )}
         </div>
+
+        {/* Date Display */}
+        {date && (
+          <p className="mt-1 text-xs font-bold text-slate-700">{formatDate(date)}</p>
+        )}
+
+        {/* Date Picker - only show when no date is set */}
+        {onUpdateDate && !date && (
+          <input
+            type="date"
+            value={date || ''}
+            onChange={(e) => onUpdateDate(e.target.value)}
+            className="mt-1 text-xs bg-transparent border-none outline-none text-slate-500 placeholder:text-slate-400"
+            placeholder="Seleccionar fecha"
+          />
+        )}
       </div>
 
       {onDelete && (

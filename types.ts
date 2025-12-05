@@ -27,6 +27,7 @@ export interface DocumentationLink {
   title: string;
   description: string;
   url: string;
+  date?: string; // ISO date string
 }
 
 // New types for the dynamic dashboard
@@ -38,6 +39,7 @@ export interface DashboardItem {
   hasIcon?: 'dollar' | 'bulb' | 'refresh';
   description?: string;
   isExternalLink?: boolean;
+  date?: string; // ISO date string
 }
 
 export interface DashboardColumn {

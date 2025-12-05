@@ -688,7 +688,7 @@ const App: React.FC = () => {
     setColumns(cols => cols.map(c => c.id === id ? { ...c, description: newDesc } : c));
   };
 
-  const handleUpdateItem = (colId: string, itemId: string, field: 'label' | 'description', value: string) => {
+  const handleUpdateItem = (colId: string, itemId: string, field: 'label' | 'description' | 'date', value: string) => {
     if (!guardEdit()) return;
     setColumns(prev => prev.map(col => {
       if (col.id !== colId) return col;
@@ -920,7 +920,8 @@ const App: React.FC = () => {
       id: `doc-${Date.now()}`,
       title: '',
       description: '',
-      url: ''
+      url: '',
+      date: ''
     };
     setDocumentationLinks(prev => [...prev, newLink]);
   };
@@ -1278,9 +1279,11 @@ const App: React.FC = () => {
                                           hasIcon={item.hasIcon}
                                           description={item.description}
                                           isExternalLink={item.isExternalLink}
+                                          date={item.date}
                                           onDelete={() => confirmDeleteItem(col.id, item.id, item.label)}
                                           onUpdateLabel={(val) => handleUpdateItem(col.id, item.id, 'label', val)}
                                           onUpdateDescription={(val) => handleUpdateItem(col.id, item.id, 'description', val)}
+                                          onUpdateDate={(val) => handleUpdateItem(col.id, item.id, 'date', val)}
                                           onUpdateStatus={(newStatusId) => handleUpdateItemStatus(col.id, item.id, newStatusId)}
                                         />
                                       </div>
@@ -1349,6 +1352,13 @@ const App: React.FC = () => {
                               variant="light"
                               placeholder="https://..."
                               className="text-xs text-blue-400 hover:underline mt-1 block truncate"
+                            />
+                            <input
+                              type="date"
+                              value={link.date || ''}
+                              onChange={(e) => handleUpdateDocumentationLink(link.id, 'date', e.target.value)}
+                              className="text-xs bg-transparent border-none outline-none text-slate-400 placeholder:text-slate-500 mt-1 block w-full"
+                              placeholder="Fecha"
                             />
                           </div>
                           <button
