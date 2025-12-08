@@ -17,7 +17,21 @@ const DEFAULT_CATEGORIES: StatusCategory[] = [
   { id: 'productivo', label: 'Productivo', color: 'emerald' },
   { id: 'endev', label: 'En Dev', color: 'blue' },
   { id: 'upgrade', label: 'Upgrade', color: 'rose' },
+  { id: 'detenido', label: 'Detenido', color: 'rose' },
+  { id: 'terminado', label: 'Terminado', color: 'indigo' },
 ];
+
+// Ensure every column carries the latest default statuses without overwriting custom ones
+const ensureDefaultStatusCategories = (categories: StatusCategory[] = []): StatusCategory[] => {
+  const existingIds = new Set(categories.map(c => c.id));
+  const merged = [...categories];
+  DEFAULT_CATEGORIES.forEach(cat => {
+    if (!existingIds.has(cat.id)) {
+      merged.push(cat);
+    }
+  });
+  return merged;
+};
 
 // --- INITIAL DATA STATE ---
 const INITIAL_COLUMNS: DashboardColumn[] = [
@@ -320,9 +334,15 @@ const App: React.FC = () => {
 
   const [columns, setColumns] = useState<DashboardColumn[]>(() => {
     if (currentPage?.columns) {
-      return currentPage.columns;
+      return currentPage.columns.map(col => ({
+        ...col,
+        statusCategories: ensureDefaultStatusCategories(col.statusCategories)
+      }));
     }
-    return INITIAL_COLUMNS;
+    return INITIAL_COLUMNS.map(col => ({
+      ...col,
+      statusCategories: ensureDefaultStatusCategories(col.statusCategories)
+    }));
   });
   
   // UI States
@@ -484,7 +504,10 @@ const App: React.FC = () => {
         footerButtonLabel: 'Ver Documentación',
         footerUrl: 'https://docs.google.com'
       },
-      columns: JSON.parse(JSON.stringify(baseColumns)), // Deep copy de la plantilla
+      columns: JSON.parse(JSON.stringify(baseColumns)).map((col: DashboardColumn) => ({
+        ...col,
+        statusCategories: ensureDefaultStatusCategories(col.statusCategories)
+      })), // Deep copy de la plantilla con estados actualizados
       footerMetrics: JSON.parse(JSON.stringify(baseMetrics)), // Deep copy de la plantilla
       documentationLinks: JSON.parse(JSON.stringify(baseDocumentation)), // Deep copy de la plantilla
       connections: [],
@@ -517,7 +540,10 @@ const App: React.FC = () => {
     if (page) {
       setCurrentPageId(pageId);
       setPageConfig(page.pageConfig);
-      setColumns(page.columns);
+      setColumns(page.columns.map(col => ({
+        ...col,
+        statusCategories: ensureDefaultStatusCategories(col.statusCategories)
+      })));
       setFooterMetrics(page.footerMetrics);
       setDocumentationLinks(page.documentationLinks);
     }
@@ -959,6 +985,13 @@ const App: React.FC = () => {
     setDocumentationLinks(prev => prev.filter(link => link.id !== id));
   };
 
+  const openDocumentationLink = (url: string) => {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return;
+    const href = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
+  };
+
   const getHeaderColor = (color: string) => {
     switch (color) {
       case 'blue': return 'bg-blue-600';
@@ -1115,7 +1148,7 @@ const App: React.FC = () => {
               </header>
 
               {/* --- MAIN GRID --- */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {columns.map((col) => {
                   const isColumnDragging = dragState.activeId === col.id && dragState.type === 'COLUMN';
                   const isColumnOver = dragOverId === col.id && dragState.type === 'COLUMN';
@@ -1369,20 +1402,23 @@ const App: React.FC = () => {
                               multiline={true}
                               className="text-xs text-slate-300 mt-1 leading-tight"
                             />
-                            <EditableText
-                              value={link.url}
-                              onSave={(val) => handleUpdateDocumentationLink(link.id, 'url', val)}
-                              variant="light"
-                              placeholder="https://..."
-                              className="text-xs text-blue-400 hover:underline mt-1 block truncate"
-                            />
-                            <input
-                              type="date"
-                              value={link.date || ''}
-                              onChange={(e) => handleUpdateDocumentationLink(link.id, 'date', e.target.value)}
-                              className="text-xs bg-transparent border-none outline-none text-slate-400 placeholder:text-slate-500 mt-1 block w-full"
-                              placeholder="Fecha"
-                            />
+                            <div className="flex items-center gap-2 mt-2">
+                              <button
+                                type="button"
+                                onClick={() => openDocumentationLink(link.url)}
+                                className="opacity-0 group-hover/doc-link:opacity-100 text-blue-300 hover:text-blue-100 transition-opacity p-1 rounded hover:bg-white/5"
+                                title="Abrir enlace"
+                              >
+                                <ArrowRight size={14} />
+                              </button>
+                              <EditableText
+                                value={link.url}
+                                onSave={(val) => handleUpdateDocumentationLink(link.id, 'url', val)}
+                                variant="light"
+                                placeholder="https://..."
+                                className="text-xs text-blue-400 hover:underline block truncate flex-1 break-all"
+                              />
+                            </div>
                           </div>
                           <button
                             onClick={() => handleDeleteDocumentationLink(link.id)}

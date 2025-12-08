@@ -21,7 +21,8 @@ import {
   AlertCircle,
   Loader,
   TrendingUp,
-  Shield
+  Shield,
+  XCircle
 } from 'lucide-react';
 
 interface DiagramNodeProps {
@@ -91,6 +92,12 @@ const DiagramNode: React.FC<DiagramNodeProps> = ({
   const getStatusIcon = (statusLabel: string) => {
     const normalizedLabel = statusLabel.toLowerCase().trim();
     
+    if (normalizedLabel.includes('detenido') || normalizedLabel.includes('pausa') || normalizedLabel.includes('pausado') || normalizedLabel.includes('bloque')) {
+      return <XCircle size={12} />;
+    }
+    if (normalizedLabel.includes('terminado') || normalizedLabel.includes('completo') || normalizedLabel.includes('finalizado') || normalizedLabel.includes('done')) {
+      return <CheckCircle size={12} />;
+    }
     // Map keywords to appropriate icons
     if (normalizedLabel.includes('productivo') || normalizedLabel.includes('prod') || normalizedLabel.includes('production')) {
       return <CheckCircle size={12} />;
